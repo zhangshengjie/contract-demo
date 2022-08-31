@@ -1,2 +1,6 @@
 # contract-demo
-contract Demos
+
+build
+```shell
+sol-merger  -c ./dev/*.sol ./build
+```
