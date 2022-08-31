@@ -2512,6 +2512,9 @@ contract NFT is ERC721ABurnable, AccessControl {
         _safeMint(msg.sender, amount_);
     }
 
+    /**
+     * @dev Synthesized through NFTs
+     */
     function SyntheticMint(
         uint256[] calldata ids,
         address signer,
