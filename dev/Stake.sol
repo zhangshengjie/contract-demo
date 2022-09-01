@@ -82,7 +82,7 @@ contract Stake is Ownable {
      */
     function createStake(address NFT, uint256[] calldata tokenIds) public {
         require(tokenIds.length > 0, "Stake: No tokens provided");
-        address sender = _msgSender();
+        address sender = msg.sender;
         require(
             IERC721(NFT).isApprovedForAll(sender, address(this)),
             "Stake: Not approved for all"
@@ -117,7 +117,7 @@ contract Stake is Ownable {
      */
     function withdrawStake(uint256 stakeId) public {
         StakeInfo memory stake = stakes[stakeId];
-        require(stake.staker == _msgSender(), "Stake: Not staker");
+        require(stake.staker == msg.sender, "Stake: Not staker");
         unchecked {
             require(
                 stake.unlockTime >= block.timestamp,

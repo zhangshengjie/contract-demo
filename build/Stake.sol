@@ -3,28 +3,6 @@ pragma solidity ^0.8.4;
 
 
 
-// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
-/**
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-}
-
-
 // source: OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -38,7 +16,7 @@ abstract contract Context {
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract Ownable is Context {
+abstract contract Ownable {
     address private _owner;
 
     event OwnershipTransferred(
@@ -72,7 +50,7 @@ abstract contract Ownable is Context {
      * @dev Throws if the sender is not the owner.
      */
     function _checkOwner() internal view virtual {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        require(owner() == msg.sender, "Ownable: caller is not the owner");
     }
 
     /**
@@ -189,7 +167,7 @@ contract Stake is Ownable {
      */
     function createStake(address NFT, uint256[] calldata tokenIds) public {
         require(tokenIds.length > 0, "Stake: No tokens provided");
-        address sender = _msgSender();
+        address sender = msg.sender;
         require(
             IERC721(NFT).isApprovedForAll(sender, address(this)),
             "Stake: Not approved for all"
@@ -224,7 +202,7 @@ contract Stake is Ownable {
      */
     function withdrawStake(uint256 stakeId) public {
         StakeInfo memory stake = stakes[stakeId];
-        require(stake.staker == _msgSender(), "Stake: Not staker");
+        require(stake.staker == msg.sender, "Stake: Not staker");
         unchecked {
             require(
                 stake.unlockTime >= block.timestamp,
