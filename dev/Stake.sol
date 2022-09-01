@@ -96,9 +96,9 @@ contract Stake is Ownable {
         unchecked {
             uint64 unlockTime = uint64(block.timestamp) + minimumStakeTime;
             stakes[stakeIndex] = StakeInfo(sender, NFT, tokenIds, unlockTime);
-            emit StakeCreated(stakeIndex, sender, NFT, tokenIds);
             stakeIndex++;
         }
+        emit StakeCreated(stakeIndex, sender, NFT, tokenIds);
     }
 
     /**
@@ -118,12 +118,11 @@ contract Stake is Ownable {
     function withdrawStake(uint256 stakeId) public {
         StakeInfo memory stake = stakes[stakeId];
         require(stake.staker == msg.sender, "Stake: Not staker");
-        unchecked {
-            require(
-                stake.unlockTime >= block.timestamp,
-                "Stake: Not enough time has passed"
-            );
-        }
+        require(
+            stake.unlockTime < block.timestamp,
+            "Stake: Not enough time has passed"
+        );
+
         for (uint256 i = 0; i < stake.tokenIds.length; ) {
             IERC721(stake.NFT).transferFrom(
                 address(this),

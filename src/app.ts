@@ -4,7 +4,7 @@
  * @Autor: z.cejay@gmail.com
  * @Date: 2022-08-04 21:05:35
  * @LastEditors: cejay
- * @LastEditTime: 2022-09-01 17:01:33
+ * @LastEditTime: 2022-09-01 21:21:33
  */
 
 import { assert } from 'console';
@@ -15,11 +15,17 @@ async function main() {
     const web3 = new Web3('http://localhost:8545');
     await Utils.sleep(1000 * 1);
     const accounts = await web3.eth.getAccounts();
-    console.log(accounts);
+    // each accounts
+    for (let i = 0; i < accounts.length; i++) {
+        const account = accounts[i];
+        console.log(`${i}\t${account}`);
+    }
     assert(accounts.length > 5);
 
     // #region NFT
-    if (true) {
+    let NFTContract: any;
+    let NFTAddress: string;
+    {
         const NFTObj = await Utils.compileContract(`${__dirname}/../build/ERC721A-NFT.sol`, 'NFT');
 
         const NFTObjArgs = [
@@ -31,9 +37,9 @@ async function main() {
             accounts[2] //address controller_
         ];
 
-        const NFTAddress = await Utils.deployContract(web3, NFTObj.abi, '0x' + NFTObj.bytecode, NFTObjArgs, accounts[0], 1e9);
+        NFTAddress = await Utils.deployContract(web3, NFTObj.abi, '0x' + NFTObj.bytecode, NFTObjArgs, accounts[0], 1e9);
         console.log('NFT address:' + NFTAddress);
-        const NFTContract = new web3.eth.Contract(NFTObj.abi, NFTAddress);
+        NFTContract = new web3.eth.Contract(NFTObj.abi, NFTAddress);
 
         // defalut saleEnabled = false can not mint
         // function batchMint(uint32 amount_)
@@ -152,28 +158,161 @@ async function main() {
             throw error;
         }
         try {
-            await NFTContract.methods.batchMint(2).send(
+            await NFTContract.methods.batchMint(10).send(
                 {
                     from: accounts[3],
                     gas: 1e9,
-                    value: web3.utils.toWei('3', 'ether')
+                    value: web3.utils.toWei('10', 'ether')
                 }
             );
-            console.log('10. batchMint test passed');
+            throw new Error('batchMint test failed');
+        } catch (error) {
+            // ok
+            if ((<any>error).message.includes('Insufficent supply')) {
+                console.log('10. batchMint test passed');
+            } else {
+                throw error;
+            }
+        }
+        try {
+            await NFTContract.methods.batchMint(9).send(
+                {
+                    from: accounts[3],
+                    gas: 1e9,
+                    value: web3.utils.toWei('9', 'ether')
+                }
+            );
+            console.log('11. batchMint test passed');
+        } catch (error) {
+            throw error;
+        }
+
+        //function withdraw()
+        try {
+            await NFTContract.methods.withdraw().send(
+                {
+                    from: accounts[2],
+                }
+            );
+            console.log('12. withdraw test passed');
+        } catch (error) {
+            throw error;
+        }
+
+    }
+
+    // #endregion
+
+    // #region stake
+
+    {
+        const StakeObj = await Utils.compileContract(`${__dirname}/../build/Stake.sol`, 'Stake');
+
+        const StakeObjArgs = [
+            accounts[4]
+        ];
+
+        const StakeAddress = await Utils.deployContract(web3, StakeObj.abi, '0x' + StakeObj.bytecode, StakeObjArgs, accounts[0], 1e9);
+        console.log('Stake address:' + StakeAddress);
+        const StakeContract = new web3.eth.Contract(StakeObj.abi, StakeAddress);
+        //  function setMinimumStakeTime(uint24 newMinimumStakeTime)
+        try {
+            await StakeContract.methods.setMinimumStakeTime(30).send(
+                { from: accounts[0], }
+            );
+            throw new Error('setMinimumStakeTime test failed');
+        }
+        catch (error) {
+            if ((<any>error).message.includes('caller is not the owner')) {
+                console.log('1. setMinimumStakeTime test passed');
+            } else {
+                throw error;
+            }
+        }
+        try {
+            await StakeContract.methods.setMinimumStakeTime(10).send(
+                { from: accounts[4], }
+            );
+            console.log('2. setMinimumStakeTime test passed');
+        }
+        catch (error) {
+            throw error;
+        }
+
+        //function createStake(address NFT, uint256[] calldata tokenIds)
+        try {
+            await StakeContract.methods.createStake(NFTAddress, [0, 1, 2]).send(
+                { from: accounts[3], }
+            );
+            throw new Error('createStake test failed');
+        }
+        catch (error) {
+            if ((<any>error).message.includes('Not approved for all')) {
+                console.log('3. createStake test passed');
+            } else {
+                throw error;
+            }
+        }
+        // approve for all
+        try {
+            await NFTContract.methods.setApprovalForAll(StakeAddress, true).send(
+                { from: accounts[3], }
+            );
+            console.log('4. setApprovalForAll test passed');
+        } catch (error) {
+            throw error;
+        }
+        try {
+            await StakeContract.methods.createStake(NFTAddress, [3, 1]).send(
+                {
+                    from: accounts[3],
+                    gas: 1e9
+                }
+            );
+            await StakeContract.methods.createStake(NFTAddress, [2]).send(
+                {
+                    from: accounts[3],
+                    gas: 1e9
+                }
+            );
+            console.log('5. createStake test passed');
+        }
+        catch (error) {
+            throw error;
+        }
+
+        // function withdrawStake(uint256 stakeId)
+        try {
+            await StakeContract.methods.withdrawStake(0).send(
+                {
+                    from: accounts[3],
+                    gas: 1e9
+                }
+            );
+            throw new Error('withdrawStake test failed');
+        } catch (error) {
+            if ((<any>error).message.includes('Not enough time has passed')) {
+                console.log('6. withdrawStake test passed');
+            } else {
+                throw error;
+            }
+        }
+        await Utils.sleep(11 * 1000);
+        try {
+            await StakeContract.methods.withdrawStake(0).send(
+                {
+                    from: accounts[3],
+                    gas: 1e9
+                }
+            );
+            console.log('7. withdrawStake test passed');
         } catch (error) {
             throw error;
         }
 
 
 
-
-
-
-
-
-
     }
-
 
     // #endregion
 
