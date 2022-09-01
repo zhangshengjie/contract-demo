@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract NFT is ERC721ABurnable, AccessControl {
+contract NFT is ERC721A, ERC721ABurnable, AccessControl {
     bytes32 public constant SALE_ROLE = keccak256("SALE_ROLE");
     bytes32 public constant SIGN_ROLE = keccak256("SIGN_ROLE");
 
@@ -255,6 +255,12 @@ contract NFT is ERC721ABurnable, AccessControl {
         override(AccessControl, ERC721A, IERC721A)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        /**
+             0x01ffc9a7  ERC165 interface ID for ERC165.
+             0x80ac58cd ERC165 interface ID for ERC721.
+             0x5b5e139f ERC165 interface ID for ERC721Metadata.
+         */
+        return (ERC721A.supportsInterface(interfaceId) ||
+            AccessControl.supportsInterface(interfaceId));
     }
 }
