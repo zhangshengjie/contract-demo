@@ -252,7 +252,7 @@ contract NFT is ERC721ABurnable, AccessControl {
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControl, ERC721A)
+        override(AccessControl, ERC721A, IERC721A)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
