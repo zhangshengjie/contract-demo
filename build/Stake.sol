@@ -87,7 +87,6 @@ abstract contract Ownable {
     }
 }
 
-
 interface IERC721 {
     /**
      * @dev Transfers `tokenId` token from `from` to `to`.
@@ -147,6 +146,15 @@ interface IERC20 {
         address to,
         uint256 amount
     ) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
 }
 
 contract Stake is Ownable {
@@ -402,11 +410,7 @@ contract Stake is Ownable {
             stake.unlockTime < block.timestamp,
             "Stake: Not enough time has passed"
         );
-        IERC20(stake.asset).transferFrom(
-            address(this),
-            stake.staker,
-            stake.amount
-        );
+        IERC20(stake.asset).transfer(stake.staker, stake.amount);
 
         emit FTStakeWithdrawn(stakeId);
         delete FTStake[stakeId]; // recycle gas
