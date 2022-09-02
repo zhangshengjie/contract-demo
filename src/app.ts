@@ -4,7 +4,7 @@
  * @Autor: z.cejay@gmail.com
  * @Date: 2022-08-04 21:05:35
  * @LastEditors: cejay
- * @LastEditTime: 2022-09-01 21:21:33
+ * @LastEditTime: 2022-09-02 08:27:40
  */
 
 import { assert } from 'console';
@@ -215,40 +215,40 @@ async function main() {
         const StakeAddress = await Utils.deployContract(web3, StakeObj.abi, '0x' + StakeObj.bytecode, StakeObjArgs, accounts[0], 1e9);
         console.log('Stake address:' + StakeAddress);
         const StakeContract = new web3.eth.Contract(StakeObj.abi, StakeAddress);
-        //  function setMinimumStakeTime(uint24 newMinimumStakeTime)
+        //  function setNFTMinimumStakeTime(uint24 newMinimumStakeTime)
         try {
-            await StakeContract.methods.setMinimumStakeTime(30).send(
+            await StakeContract.methods.setNFTMinimumStakeTime(30).send(
                 { from: accounts[0], }
             );
-            throw new Error('setMinimumStakeTime test failed');
+            throw new Error('setNFTMinimumStakeTime test failed');
         }
         catch (error) {
             if ((<any>error).message.includes('caller is not the owner')) {
-                console.log('1. setMinimumStakeTime test passed');
+                console.log('1. setNFTMinimumStakeTime test passed');
             } else {
                 throw error;
             }
         }
         try {
-            await StakeContract.methods.setMinimumStakeTime(10).send(
+            await StakeContract.methods.setNFTMinimumStakeTime(10).send(
                 { from: accounts[4], }
             );
-            console.log('2. setMinimumStakeTime test passed');
+            console.log('2. setNFTMinimumStakeTime test passed');
         }
         catch (error) {
             throw error;
         }
 
-        //function createStake(address NFT, uint256[] calldata tokenIds)
+        //function createNFTStake(address NFT, uint256[] calldata tokenIds)
         try {
-            await StakeContract.methods.createStake(NFTAddress, [0, 1, 2]).send(
+            await StakeContract.methods.createNFTStake(NFTAddress, [0, 1, 2]).send(
                 { from: accounts[3], }
             );
-            throw new Error('createStake test failed');
+            throw new Error('createNFTStake test failed');
         }
         catch (error) {
             if ((<any>error).message.includes('Not approved for all')) {
-                console.log('3. createStake test passed');
+                console.log('3. createNFTStake test passed');
             } else {
                 throw error;
             }
@@ -263,49 +263,49 @@ async function main() {
             throw error;
         }
         try {
-            await StakeContract.methods.createStake(NFTAddress, [3, 1]).send(
+            await StakeContract.methods.createNFTStake(NFTAddress, [3, 1]).send(
                 {
                     from: accounts[3],
                     gas: 1e9
                 }
             );
-            await StakeContract.methods.createStake(NFTAddress, [2]).send(
+            await StakeContract.methods.createNFTStake(NFTAddress, [2]).send(
                 {
                     from: accounts[3],
                     gas: 1e9
                 }
             );
-            console.log('5. createStake test passed');
+            console.log('5. createNFTStake test passed');
         }
         catch (error) {
             throw error;
         }
 
-        // function withdrawStake(uint256 stakeId)
+        // function withdrawNFTStake(uint256 stakeId)
         try {
-            await StakeContract.methods.withdrawStake(0).send(
+            await StakeContract.methods.withdrawNFTStake(0).send(
                 {
                     from: accounts[3],
                     gas: 1e9
                 }
             );
-            throw new Error('withdrawStake test failed');
+            throw new Error('withdrawNFTStake test failed');
         } catch (error) {
             if ((<any>error).message.includes('Not enough time has passed')) {
-                console.log('6. withdrawStake test passed');
+                console.log('6. withdrawNFTStake test passed');
             } else {
                 throw error;
             }
         }
         await Utils.sleep(11 * 1000);
         try {
-            await StakeContract.methods.withdrawStake(0).send(
+            await StakeContract.methods.withdrawNFTStake(0).send(
                 {
                     from: accounts[3],
                     gas: 1e9
                 }
             );
-            console.log('7. withdrawStake test passed');
+            console.log('7. withdrawNFTStake test passed');
         } catch (error) {
             throw error;
         }
