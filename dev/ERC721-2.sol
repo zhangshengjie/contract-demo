@@ -20,7 +20,7 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
     string private baseURI;
     uint32 public maxSupply;
 
-    bool public saleEnabled;
+    uint64 public saleStartTime;
     uint256 private salePrice;
 
     address paymentReceiver;
@@ -54,7 +54,10 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
     }
 
     modifier forSale() {
-        require(saleEnabled, "Sale not enabled");
+        require(
+            saleStartTime > 0 && saleStartTime <= block.timestamp,
+            "Sale not enabled"
+        );
         _;
     }
 
@@ -76,9 +79,11 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
     /**
      * @dev Toggle to allow for minting NFTs
      */
-    function toggleSaleEnable(bool state_) public onlyRole(SALE_ROLE) {
-        require(saleEnabled != state_, "state already set");
-        saleEnabled = state_;
+    function setSaleStartTime(uint64 saleStartTime_)
+        public
+        onlyRole(SALE_ROLE)
+    {
+        saleStartTime = saleStartTime_;
     }
 
     /**
@@ -113,35 +118,41 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
      * @dev Mint NFT using signed message
      *
      */
-    function signedBatchMint(
-        uint32 amount_,
-        bytes memory signature_
-    ) external payable forSale {
+    function signedBatchMint(uint32 amount_, bytes memory signature_)
+        external
+        payable
+        forSale
+    {
         require(amount_ > 0, "Cannot mint zero");
         require(maxSupply >= totalSupply() + amount_, "Insufficent supply");
 
         bytes32 hash = keccak256(
             abi.encodePacked(msg.sender, msg.value, amount_)
         );
-        _checkRole(MINT_ROLE, hash.toEthSignedMessageHash().recover(signature_));
- 
+        _checkRole(
+            MINT_ROLE,
+            hash.toEthSignedMessageHash().recover(signature_)
+        );
+
         _safeMint(msg.sender, amount_);
     }
 
     /**
      * @dev Synthesized through NFTs
      */
-    function SyntheticMint(
-        uint256[] calldata ids_,
-        bytes memory signature_
-    ) external {
+    function SyntheticMint(uint256[] calldata ids_, bytes memory signature_)
+        external
+    {
         require(
             ids_.length > 1 && ids_.length < type(uint32).max,
             "Cannot synthetically mint less than 2 NFTs"
         );
         bytes32 hash = keccak256(abi.encodePacked(ids_, address(this))); // add address(this) to prevent replay attacks
-        _checkRole(SIGN_ROLE, hash.toEthSignedMessageHash().recover(signature_));
- 
+        _checkRole(
+            SIGN_ROLE,
+            hash.toEthSignedMessageHash().recover(signature_)
+        );
+
         for (uint256 i = 0; i < ids_.length; ) {
             burn(ids_[i]);
             unchecked {
