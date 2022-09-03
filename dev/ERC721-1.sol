@@ -159,7 +159,6 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
      * @dev Get price if price controller is disabled
      */
     function getDefaultPrice(uint256 amount_) public view returns (uint256) {
-        require(amount_ > 0, "Cannot mint zero");
         require(salePrice > 0, "Sale price not set");
         return amount_ * salePrice;
     }
@@ -184,7 +183,6 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
         internal
         returns (uint256)
     {
-        require(amount_ > 0, "Cannot mint zero");
         specificSale storage specificSale_ = specificSales[user_];
         require(
             amount_ >= (specificSale_.maxSupply - specificSale_.claimed),
@@ -224,7 +222,7 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
             "Cannot synthetically mint less than 2 NFTs"
         );
         bytes32 hash = keccak256(abi.encodePacked(ids, address(this))); // add address(this) to prevent replay attacks
-        require(hash.recover(signature) == signer, "Invalid signature");
+        require(hash.toEthSignedMessageHash().recover(signature) == signer, "Invalid signature");
 
         for (uint256 i = 0; i < ids.length; ) {
             burn(ids[i]);
@@ -236,7 +234,7 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
             maxSupply = maxSupply - uint32(ids.length) + 1;
         }
         uint256 nextTokenID = _nextTokenId();
-        _safeMint(signer, 1);
+        _safeMint(msg.sender, 1);
         emit SyntheticMinted(ids, nextTokenID);
     }
 
@@ -252,7 +250,7 @@ contract NFT is ERC721A, ERC721ABurnable, AccessControl {
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControl, ERC721A, IERC721A)
+        override(AccessControl, ERC721A)
         returns (bool)
     {
         /**
